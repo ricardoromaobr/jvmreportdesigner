@@ -1,0 +1,11 @@
+product:
+  type: lib
+  platforms: [jvm]
+
+
+dependencies:
+  - io.github.humbleui:skija-windows-x64:0.143.3
+  - io.github.humbleui:skija-shared:0.143.3
+  - io.github.humbleui:types:0.2.0
+  - ../report-domain
+

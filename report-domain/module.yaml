@@ -1,0 +1,7 @@
+product:
+  type: lib
+  platforms: [ jvm]
+
+dependencies:
+  - $kotlin.reflect
+  - org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0

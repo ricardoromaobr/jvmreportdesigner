@@ -1,0 +1,4 @@
+modules:
+  - report-designer
+  - report-domain
+  - report-skia-renderer
