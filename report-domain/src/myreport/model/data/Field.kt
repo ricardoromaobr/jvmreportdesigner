@@ -12,7 +12,7 @@ abstract class Field {
 
     lateinit var fieldKind: FieldKind
 
-    abstract fun getValue(current: Any, format: String): String
+    abstract fun getValue(current: Any?, format: String): Any?
 
     override fun toString(): String {
         return name!!

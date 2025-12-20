@@ -5,3 +5,6 @@ product:
 dependencies:
   - $kotlin.reflect
   - org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0
+
+test-dependencies:
+  - $kotlin.test

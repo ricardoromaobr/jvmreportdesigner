@@ -4,21 +4,67 @@ import kotlin.reflect.KClass
 
 class ObjectDataSource<T> : IDataSource {
 
-    override fun getValue(fieldName: String, format: String) {
-        TODO("Not yet implemented")
+    private var _current: T
+    private var _data: Iterable<T>
+    private var _enumerator: Iterator<T>
+    private lateinit var _sortingFields: Array<String>
+    private val _fields: MutableList <Field> = mutableListOf<Field>()
+    private var _nextRes: Boolean
+    private var _currentIndex: Int = -1
+    var properties: MutableMap<String, Field> = mutableMapOf()
+
+    constructor(data: Iterable<T>) {
+        _data = data
+        _enumerator = _data.iterator()
+        _nextRes = _enumerator.hasNext()
+        _current = _enumerator.next()
+        _currentIndex++
+        discoverFields()
+    }
+
+    override fun getValue(fieldName: String, format: String): String {
+        val field = _fields.find { it.name == fieldName }
+        val value = field?.getValue(_current, format )
+        return value?.toString() ?: ""
     }
 
     override val currentRowIndex: Int
+        get() = _currentIndex
 
     override fun applySort(sortingFields: Iterator<String>) {
         TODO("Not yet implemented")
     }
 
     override fun discoverFields(): Array<Field> {
-        TODO("Not yet implemented")
+        _fields.clear()
+        _fields.addAll(FieldBuilder.createFields(_current as Any, "",FieldKind.DATA))
+        properties.clear()
+
+        return _fields.toTypedArray()
     }
 
-    override fun containsField(fieldName: String) {
-        TODO("Not yet implemented")
+    override fun containsField(fieldName: String): Boolean {
+        return _fields.any { it.name == fieldName }
     }
+
+    val current: Any?
+        get() = _current
+
+    fun reset() {
+        _enumerator = _data.iterator()
+        _nextRes = _enumerator.hasNext()
+        _current = _enumerator.next()
+        _currentIndex = 0
+    }
+
+    fun moveNext(): Boolean {
+
+        if (_nextRes) {
+            _nextRes = _enumerator.hasNext()
+            _current = _enumerator.next()
+        }
+        return _nextRes
+    }
+
+
 }

@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import myreport.model.data.membersOf
+
 import org.jetbrains.skia.Paint
 import org.jetbrains.skia.Surface
 
@@ -55,8 +55,6 @@ fun App() {
 }
 
 fun main() = application {
-
-    var members = membersOf<Person>()
 
     Window(onCloseRequest = ::exitApplication) {
         App()
