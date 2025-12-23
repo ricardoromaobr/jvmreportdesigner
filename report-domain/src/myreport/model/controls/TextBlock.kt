@@ -16,7 +16,7 @@ class TextBlock : Control(), IResizable, IDataControl {
 
     override var canShrink: Boolean = false
 
-    override var fieldName: String = ""
+    override var fieldName: String? = null
 
     override lateinit var fieldKind: FieldKind
 

@@ -195,6 +195,14 @@ class TextBlockRenderer : IControlRenderer {
         }
     }
 
+    /**
+     * Measure the control to determine the Size
+     * @param context
+     * The canvas to be used to measure and setting the paint and etc.
+     * @param control
+     * The control that will be measured
+     * @return Size
+     */
     override fun measure(context: Any, control: Control): Size {
         val canvas = context as Canvas
         var textBlock = control as TextBlock
@@ -218,7 +226,13 @@ class TextBlockRenderer : IControlRenderer {
         val fontCollection = FontCollection()
         fontCollection.setTestFontManager(fontMgr)
         val paragraphBuilder = ParagraphBuilder(paragraphStyle, fontCollection)
-        paragraphBuilder.addText(textBlock.text)
+        // format text if it was informed
+        var text = ""
+        if (textBlock.fieldTextFormat.isNullOrEmpty())
+            text = textBlock.fieldTextFormat.format(textBlock.text)
+        else text = textBlock.text
+
+        paragraphBuilder.addText(text)
 
         val paragraph = paragraphBuilder.build()
 

@@ -4,7 +4,7 @@ import myreport.model.SectionType
 
 abstract class Section : Control(), IResizable {
 
-    protected lateinit var sectionType: SectionType
+    lateinit var sectionType: SectionType
 
     override var canGrow: Boolean = false
     override var canShrink: Boolean = false
