@@ -7,4 +7,5 @@ interface IDataSource  {
     fun applySort (sortingFields: Iterator<String>)
     fun discoverFields() : Array<Field>
     fun containsField(fieldName: String): Boolean
+    fun moveNext(): Boolean
 }

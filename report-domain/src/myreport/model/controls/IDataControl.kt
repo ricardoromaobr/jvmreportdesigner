@@ -4,7 +4,7 @@ import myreport.model.data.Field
 import myreport.model.data.FieldKind
 
 interface IDataControl {
-    var fieldName: String
+    var fieldName: String?
 
     var fieldKind: FieldKind
 

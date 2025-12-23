@@ -57,7 +57,7 @@ class ObjectDataSource<T> : IDataSource {
         _currentIndex = 0
     }
 
-    fun moveNext(): Boolean {
+    override fun moveNext(): Boolean {
 
         if (_nextRes) {
             _nextRes = _enumerator.hasNext()
