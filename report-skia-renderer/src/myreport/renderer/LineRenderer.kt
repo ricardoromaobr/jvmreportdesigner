@@ -41,7 +41,7 @@ class LineRenderer : IControlRenderer {
         if (line.location.y == line.end.y)
             height = line.lineWidth
 
-        return Size (height, line.lineWidth)
+        return Size (height, line.width)
     }
 
     override var dpi: Float = 96f
@@ -59,7 +59,7 @@ class LineRenderer : IControlRenderer {
         var second = control.createControl () as Line;
         var newX: Float = 0.0f
 
-        if (first.location.x !== first.end.x) {
+        if (first.location.x != first.end.x) {
             if (first.location.y > first.end.y) {
                 newX = CalculateXAtYZero(first.end.x, height, first.location.x, -(first.height - height))
                 first.location = myreport.model.Point(newX, first.end.y + height)

@@ -1,6 +1,7 @@
 package myreport.model.controls
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import myreport.model.BeforeControlProcessing
 import myreport.model.Color
 import myreport.model.Point
@@ -8,11 +9,11 @@ import myreport.model.ReportContext
 import myreport.model.Size
 
 @Serializable
-abstract class Control {
+sealed class Control {
 
-    lateinit var templateControl: Control
+    var templateControl: Control? = null
 
-    var backgroundColor = Color(1f, 1f, 1f, 0f)
+    var backgroundColor = Color(255f, 0f, 0f, 255f)
     var location = Point(0f, 0f)
     var size = Size(0f, 0f)
 
@@ -58,10 +59,11 @@ abstract class Control {
         c.templateControl = this
     }
 
-    var beforeControlProcessing: BeforeControlProcessing? = null
+    @Transient
+    var beforeControlProcessing: BeforeControlProcessing = {context, control -> }
 
-    internal fun fireBeforeControlProcessing(rc: ReportContext, c: Control) {
-        beforeControlProcessing?.invoke(rc, c)
+    internal fun fireBeforeControlProcessing( rc: ReportContext, c: Control) {
+        beforeControlProcessing.invoke(rc, c)
 
     }
 }

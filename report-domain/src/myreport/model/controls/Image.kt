@@ -1,8 +1,10 @@
 package myreport.model.controls
 
+import kotlinx.serialization.Serializable
 import myreport.model.Border
 import myreport.model.Point
 
+@Serializable
 class Image: Control() {
 
     lateinit var imageKey: String

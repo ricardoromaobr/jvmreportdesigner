@@ -38,7 +38,7 @@ class SectionRenderer : IControlRenderer {
     override fun measure(context: Any, control: Control): Size {
         val section = control as Section
         val borderRect = Rect(section.location.x, section.location.x, section.width, section.height)
-        return myreport.model.Size(borderRect.width, borderRect.height)
+        return Size(borderRect.width, borderRect.height)
     }
 
     override var dpi: Float = 96f

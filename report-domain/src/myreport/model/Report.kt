@@ -1,42 +1,55 @@
 package myreport.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+
 import myreport.model.PaperSizes.Companion.paperSizes
+import myreport.model.controls.DetailSection
+import myreport.model.controls.PageHeaderSection
+import myreport.model.controls.ReportHeaderSection
 import myreport.model.controls.Section
 import myreport.model.data.Field
 import myreport.model.data.IDataSource
 import myreport.model.data.ObjectDataSource
 
+
+@Serializable
 class Report {
     var title: String? = null
     var dataScript: String? = null
+
     val sections: MutableList<Section> = mutableListOf()
+
+    @Transient
     val pages: MutableList<Page> = mutableListOf()
+
     val parameters: MutableList<Field> = mutableListOf()
     val dataFields: MutableList<Field> = mutableListOf()
     val expressions: MutableList<Field> = mutableListOf()
     val groups: MutableList<Group> = mutableListOf()
     var unit: UnitType = UnitType.PT
-    var pageSize: PaperSizeType = PaperSizeType.A4
+    var paperSizeType: PaperSizeType = PaperSizeType.A4
 
     // it need to be the same unit of the unit property
     var margin: Thickness = Thickness(28f)
 
     val height: Float
         get() {
-            val paperSize = paperSizes.filter { paperSize -> paperSize.sizeType == pageSize }.first()
+            val paperSize = paperSizes.filter { paperSize -> paperSize.sizeType == paperSizeType }.first()
             return paperSize.getHeight(unit)
         }
 
     val width: Float
         get() {
-            val paperSize = paperSizes.filter { paperSize -> paperSize.sizeType == pageSize }.first()
+            val paperSize = paperSizes.filter { paperSize -> paperSize.sizeType == paperSizeType }.first()
             return paperSize.getWidth(unit)
         }
 
     val widthWithMargin: Float = width + margin.left + margin.right
     val heightWithMargin: Float = height + margin.top + margin.bottom
 
-    var _source: Any? = null
+    @Transient
+    private var _source: Any? = null
 
     var dataSource: Any?
         get() = dataSource as? Any
@@ -59,7 +72,7 @@ class Report {
 
     fun fillFieldsFromDatasource() {
         dataFields.clear()
-        check(DataSource == null, { "DataSouce can't be null while discovering data fields." })
+        check(DataSource == null) { "DataSouce can't be null while discovering data fields." }
         dataFields.addAll(DataSource!!.discoverFields())
     }
 
@@ -71,7 +84,16 @@ class Report {
         r.expressions.addAll(expressions)
         r.groups.addAll(groups)
         r.unit = unit
-        r.pageSize = pageSize
+        r.paperSizeType = paperSizeType
+    }
+
+    init {
+        var section: Section = ReportHeaderSection()
+        sections.add(section)
+        section = PageHeaderSection()
+        sections.add(section)
+        section = DetailSection()
+        sections.add(section)
     }
 }
 

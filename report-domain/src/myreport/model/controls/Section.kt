@@ -1,8 +1,10 @@
 package myreport.model.controls
 
+import kotlinx.serialization.Serializable
 import myreport.model.SectionType
 
-abstract class Section : Control(), IResizable {
+@Serializable
+sealed class Section : Control(), IResizable {
 
     lateinit var sectionType: SectionType
 

@@ -1,5 +1,8 @@
 package myreport.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 class Thickness {
 
     private var _l: Float = 0f

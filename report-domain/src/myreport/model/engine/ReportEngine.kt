@@ -136,7 +136,7 @@ class ReportEngine {
             if (!currentSectionControlsBuffer.contains(currentSection!!))
                 currentSectionControlsBuffer.add(currentSection!!)
 
-            result = processSectionUptoHeightTreshold(context!!.heightLeftOnCurrentPage)
+            result = processSectionUptoHeightThreshold(context!!.heightLeftOnCurrentPage)
 
             if (!result && currentSection!!.keepTogether)
                 currentSectionControlsBuffer.clear()
@@ -161,12 +161,12 @@ class ReportEngine {
     /**
      * Processes the section up to heightTreshold
      *
-     * @param heightTreshold
+     * @param heightThreshold
      * maximum height (starting from current section location.y) after which page will break
      *
-     * @return *true* if finished pocessing section and *false* while not
+     * @return Boolean,  *true* if finished pocessing section and *false* while not
      */
-    private fun processSectionUptoHeightTreshold(heightTreshold: Float): Boolean {
+    private fun processSectionUptoHeightThreshold(heightThreshold: Float): Boolean {
         var span = 0f
         var x = 0f
         var maxHeight = 0f
@@ -176,7 +176,7 @@ class ReportEngine {
         var realBreak = 0f
         var breakControlMax = 0f
         var allKeeptogether = false
-        var heightTresholdIncludingBottomMargin = 0f
+        var heightThresholdIncludingBottomMargin = 0f
 
         if (currentSectionOrderedControls.size > 0)
             maxControlBottom = currentSectionOrderedControls.maxOf { ctl -> ctl.bottom }
@@ -184,7 +184,7 @@ class ReportEngine {
         marginBottom = currentSection!!.height - maxControlBottom
         if (marginBottom < 0) marginBottom = 0f
 
-        heightTresholdIncludingBottomMargin = heightTreshold - marginBottom
+        heightThresholdIncludingBottomMargin = heightThreshold - marginBottom
 
         for (i in currentSectionOrderedControls.indices) {
             var control = currentSectionOrderedControls[i]
@@ -229,13 +229,13 @@ class ReportEngine {
                     tmpSpan = Math.max(tmpSpan, item.treshold)
             }
 
-            // adjust the space of the control if some control before is was resized
+            // adjust the space of the control if some control before was resized
             span = if (tmpSpan == Float.MIN_VALUE) 0f else tmpSpan
             control.top += tmpSpan
 
             if (control is SubReport) {
                 val sr: SubReport = control as SubReport
-                var maxSubreportHeight = ((heightTreshold - span) - sr.top)
+                var maxSubreportHeight = ((heightThreshold - span) - sr.top)
                 sr.processUpToPage(reportRenderer, maxSubreportHeight)
 
                 if (!(sr.engine.context?.heightUsedOnCurrentPage!! > maxSubreportHeight)) {
@@ -265,7 +265,7 @@ class ReportEngine {
             var bottomBeforeGrow = control.bottom
             control.size = controlSize!!
 
-            if (control.bottom <= heightTreshold) {
+            if (control.bottom <= heightThreshold) {
                 if (!allKeeptogether)
                     currentSectionControlsBuffer.add(control)
                 else {
@@ -282,9 +282,9 @@ class ReportEngine {
                     breakControlMax = control.height - (control.top + control.height - heightBeforeGrow)
 
                     if (realBreak == 0f)
-                        realBreak = heightTreshold
+                        realBreak = heightThreshold
 
-                    if (control.top > heightTreshold) {
+                    if (control.top > heightThreshold) {
                         var controlToStore = control
                         controlToStore.top -= realBreak
                         controlToStore.height = heightBeforeGrow
@@ -294,9 +294,9 @@ class ReportEngine {
 
                     var brokenControl = reportRenderer.breakOffControlAtMostAtHeight(control, breakControlMax)
                     var size = reportRenderer.measureControl(control)
-                    realBreak = heightTreshold - (breakControlMax - brokenControl[0]?.height!!)
+                    realBreak = heightThreshold - (breakControlMax - brokenControl[0]?.height!!)
 
-                    if (control.bottom > heightTreshold) {
+                    if (control.bottom > heightThreshold) {
                         storeControlForNextSection(control)
                         if (brokenControl[0] is TextBlock)
                             if ((brokenControl[0] as TextBlock).fieldName.isNullOrBlank())
@@ -313,15 +313,15 @@ class ReportEngine {
                     var controlToStore = control
                     controlToStore.top -= realBreak
                     controlToStore.height = heightBeforeGrow
-                    controlToStore.width = controlToStore.templateControl.width
+                    controlToStore.width = controlToStore.templateControl?.width!!
 
                     if (!allKeeptogether) {
 
                         for (w in 1..currentSectionControlsBuffer.size - 1) {
                             currentSectionControlsBuffer[w].height =
-                                currentSectionControlsBuffer[w].templateControl.height
+                                currentSectionControlsBuffer[w].templateControl?.height!!
                             currentSectionControlsBuffer[w].width =
-                                currentSectionControlsBuffer[w].templateControl.width
+                                currentSectionControlsBuffer[w].templateControl?.width!!
 
                             controlsFromPreviousSectionPage[currentSection?.name]!!.add(currentSectionControlsBuffer[w])
                         }
@@ -349,13 +349,13 @@ class ReportEngine {
 
         var sectionHeightWithMargin: Float = maxHeight + marginBottom
         if (!result)
-            currentSection?.height = heightTreshold
+            currentSection?.height = heightThreshold
         else if ((currentSection?.canGrow!! && currentSection?.height!! < sectionHeightWithMargin) ||
             (currentSection?.canShrink!! && currentSection?.height!! > sectionHeightWithMargin)
         )
             currentSection?.height = sectionHeightWithMargin
         else
-            currentSection?.height = Math.max(currentSection?.height!!, heightTreshold)
+            currentSection?.height = Math.max(currentSection?.height!!, heightThreshold)
 
         for (lineItem in currentSectionExtendedLines) {
 

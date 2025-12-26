@@ -1,7 +1,9 @@
 package myreport.model.controls
 
+import kotlinx.serialization.Serializable
 import myreport.model.SectionType
 
+@Serializable
 class GroupHeaderSection : Section() {
     init {
         name = "Group Header"

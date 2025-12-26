@@ -17,7 +17,7 @@ class SubReport : Control(), IResizable {
     init {
         report = Report()
         canGrow = true
-        report.pageSize = PaperSizeType.CUSTOM_SIZE
+        report.paperSizeType = PaperSizeType.CUSTOM_SIZE
     }
 
     override fun createControl(): Control {

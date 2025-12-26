@@ -1,13 +1,13 @@
 package myreport.renderer
 
 import io.github.humbleui.skija.Canvas
+import io.github.humbleui.skija.Color4f
 import io.github.humbleui.skija.Font
 import io.github.humbleui.skija.FontMgr
 import io.github.humbleui.skija.FontStyle
 import io.github.humbleui.skija.FontWeight
 import io.github.humbleui.skija.Paint
 import io.github.humbleui.skija.PaintMode
-import io.github.humbleui.skija.paragraph.Affinity
 import io.github.humbleui.skija.paragraph.Alignment
 import io.github.humbleui.skija.paragraph.FontCollection
 import io.github.humbleui.skija.paragraph.Paragraph
@@ -24,6 +24,16 @@ import myreport.model.controls.TextBlock
 import myreport.model.data.FieldKind
 
 class TextBlockRenderer : IControlRenderer {
+
+    /**
+     * Render the control
+     *
+     * @param context
+     * The canvas to draw the control
+     *
+     * @param control
+     * The control that will be drawn
+     */
     override fun render(context: Any, control: Control) {
         val canvas = context as Canvas
         val textBlock = control as TextBlock
@@ -36,7 +46,7 @@ class TextBlockRenderer : IControlRenderer {
             textBlock.location.x,
             textBlock.location.y,
             textBlock.location.x + textBlock.width,
-            textBlock.location.y)
+            textBlock.location.y + textBlock.height)
 
         if (!textBlock.canGrow || designMode)
             canvas.clipRect(borderRect)
@@ -44,12 +54,16 @@ class TextBlockRenderer : IControlRenderer {
         var paint = Paint()
 
         // background textBlock
+
         paint.setARGB(
             textBlock.backgroundColor.a.toInt(),
             textBlock.backgroundColor.r.toInt(),
             textBlock.backgroundColor.g.toInt(),
             textBlock.backgroundColor.b.toInt()
         )
+
+        //paint.color  = 0xFFFF0000.toInt()
+
         paint.mode = PaintMode.FILL
 
         var size = textBlock.size
@@ -61,9 +75,17 @@ class TextBlockRenderer : IControlRenderer {
         canvas.restore()
     }
 
+    /**
+     * Draw TextBlock Text
+     */
     private fun drawText(textBlock: TextBlock, canvas: Canvas) {
         val paragraph = settingParagraph(textBlock)
-        paragraph.layout(textBlock.size.width)
+
+        var textWith = textBlock.width - textBlock.padding.left - textBlock.padding.right -
+                textBlock.border.leftWidth -  textBlock.border.rightWidth
+
+        // calc the space with and height of the text
+        paragraph.layout(textWith)
 
         val x = textBlock.location.x + textBlock.border.leftWidth + textBlock.padding.left
         val y = textBlock.location.y + textBlock.border.topWidth + textBlock.padding.top
@@ -72,6 +94,9 @@ class TextBlockRenderer : IControlRenderer {
         paragraph.paint(canvas, x,y)
     }
 
+    /**
+     * Setting a Paragraph type of the humbleui to render TextBlock text.
+     */
     private fun settingParagraph(textBlock: TextBlock): Paragraph {
         val foregroundColor = Paint()
         val backgroundColor = Paint()
@@ -96,7 +121,6 @@ class TextBlockRenderer : IControlRenderer {
         val fontCollection = FontCollection()
         fontCollection.setDefaultFontManager(fontMgr)
         val paragraphBuilder = ParagraphBuilder(paragraphStyle, fontCollection)
-        paragraphBuilder.addText(textBlock.text)
 
         // set paragraph, color and font
         paragraphBuilder.pushStyle(TextStyle().apply {
@@ -104,12 +128,17 @@ class TextBlockRenderer : IControlRenderer {
             foreground = foregroundColor
             fontStyle = defineFontStyle(textBlock)
             fontSize = textBlock.fontSize
+            fontFamilies = arrayOf( textBlock.fontName)
         })
+        paragraphBuilder.addText(textBlock.text)
 
         val paragraph = paragraphBuilder.build()
         return paragraph
     }
 
+    /**
+     * Create a FontStyle from TextBlock settings
+     */
     private fun defineFontStyle(textBlock: TextBlock): FontStyle {
         return when (textBlock.fontSlant) {
             FontSlant.NORMAL -> {
@@ -136,6 +165,9 @@ class TextBlockRenderer : IControlRenderer {
         }
     }
 
+    /**
+     * Draw borders of the TextBlock
+     */
     private fun drawBorder(textBlock: TextBlock, canvas: Canvas) {
         // paint for border
         val paint = Paint()
@@ -207,34 +239,7 @@ class TextBlockRenderer : IControlRenderer {
         val canvas = context as Canvas
         var textBlock = control as TextBlock
 
-        val paint = Paint()
-
-        val fontMgr = FontMgr.getDefault()
-
-        val fontSlant = defineFontStyleSlant(textBlock.fontSlant)
-        val fontStyle = FontStyle(defineFontStyleWeight(textBlock.fontWeight))
-
-        val typeface = fontMgr.matchFamilyStyle(textBlock.fontName,fontStyle)
-        val font =  Font(typeface, textBlock.fontSize)
-
-        if (textBlock.fieldKind == FieldKind.EXPRESSION && textBlock.fieldName == "#NumberOfPages")
-            return Size(textBlock.width, font.spacing)
-
-        val paragraphStyle = ParagraphStyle()
-        paragraphStyle.alignment = defineAlingment(textBlock.horizontalAlignment)
-
-        val fontCollection = FontCollection()
-        fontCollection.setTestFontManager(fontMgr)
-        val paragraphBuilder = ParagraphBuilder(paragraphStyle, fontCollection)
-        // format text if it was informed
-        var text = ""
-        if (textBlock.fieldTextFormat.isNullOrEmpty())
-            text = textBlock.fieldTextFormat.format(textBlock.text)
-        else text = textBlock.text
-
-        paragraphBuilder.addText(text)
-
-        val paragraph = paragraphBuilder.build()
+       val paragraph = settingParagraph(textBlock)
 
         paragraph.layout(textBlock.width)
 
@@ -255,10 +260,6 @@ class TextBlockRenderer : IControlRenderer {
             if (paragraph.lineNumber > 1 && paragraph.height < textBlock.height)
                 size.height = paragraph.height
         }
-        else if (!textBlock.canGrow) {
-            size.width = textBlock.width
-            size.height = textBlock.height
-        }
 
         return size
     }
@@ -268,7 +269,6 @@ class TextBlockRenderer : IControlRenderer {
             HorizontalAligment.LEFT ->  Alignment.LEFT
             HorizontalAligment.RIGHT ->  Alignment.RIGHT
             HorizontalAligment.CENTER -> Alignment.CENTER
-            else -> Alignment.JUSTIFY
         }
     }
 
@@ -276,6 +276,23 @@ class TextBlockRenderer : IControlRenderer {
 
     override var designMode: Boolean = false
 
+    /**
+     * Break control that exceed the height, the second part of the control
+     * will be printed at next page, with is not need to be together.
+     *
+     * @param context
+     * Context used to draw, compute the size of the control.
+     *
+     * @param control
+     * Control to break off to the next page.
+     *
+     * @param height
+     * The limit to control be break off.
+     *
+     * @return Array<Control?>
+     * The first element is the part that will continue in current section.
+     * The second element will be sent to next section (provable in next page)
+     */
     override fun breakOffControlAtMostAtHeight(
         context: Any,
         control: Control,
@@ -310,6 +327,14 @@ class TextBlockRenderer : IControlRenderer {
         return controls
     }
 
+    /**
+     * Define the font weight, like bold, normal
+     *
+     * @param fontWeight
+     * This is the fornWeight from the TextBlock control define by designer or programmatically
+     *
+     * @return The correspondent int equivalent type for  humbleui skija.
+     */
     private fun defineFontStyleWeight(fontWeight: myreport.model.FontWeight): Int {
 
         return when (fontWeight) {
@@ -318,6 +343,13 @@ class TextBlockRenderer : IControlRenderer {
         }
     }
 
+    /**
+     * Define the font style
+     *
+     * @param fontSlant from the Textblock
+     *
+     * @return FontStant type of the humbleui type
+     */
     private fun defineFontStyleSlant(fontSlant: FontSlant): io.github.humbleui.skija.FontSlant {
         return when (fontSlant) {
             FontSlant.NORMAL -> io.github.humbleui.skija.FontSlant.UPRIGHT

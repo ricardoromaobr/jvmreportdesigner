@@ -9,3 +9,6 @@ dependencies:
   - io.github.humbleui:types:0.2.0
   - ../report-domain
 
+test-dependencies:
+  - org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0
+

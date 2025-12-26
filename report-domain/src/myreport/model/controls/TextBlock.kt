@@ -1,5 +1,6 @@
 package myreport.model.controls
 
+import kotlinx.serialization.Serializable
 import myreport.model.Border
 import myreport.model.Color
 import myreport.model.FontSlant
@@ -9,7 +10,7 @@ import myreport.model.Thickness
 import myreport.model.VerticalAlignment
 import myreport.model.data.FieldKind
 
-
+@Serializable
 class TextBlock : Control(), IResizable, IDataControl {
 
     override var canGrow: Boolean = true

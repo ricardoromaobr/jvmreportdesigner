@@ -1,11 +1,16 @@
 package myreport.model.data
 
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlin.reflect.KClass
 
+@Serializable
 abstract class Field {
 
     var name: String? = null
 
+    @Transient
     var defaultValue: Any? = null
 
     var fieldType: KClass<*>? = null
