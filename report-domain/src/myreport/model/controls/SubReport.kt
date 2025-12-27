@@ -1,6 +1,7 @@
 package myreport.model.controls
 
 import myreport.model.IReportRenderer
+import myreport.model.PaperSize
 import myreport.model.PaperSizeType
 import myreport.model.Report
 import myreport.model.engine.ReportEngine
@@ -18,6 +19,7 @@ class SubReport : Control(), IResizable {
         report = Report()
         canGrow = true
         report.paperSizeType = PaperSizeType.CUSTOM_SIZE
+        report.setCustomPaperSize(PaperSize(PaperSizeType.CUSTOM_SIZE, width, 35f))
     }
 
     override fun createControl(): Control {

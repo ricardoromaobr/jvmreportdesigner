@@ -4,11 +4,11 @@ import kotlin.reflect.KClass
 
 class ObjectDataSource<T> : IDataSource {
 
-    private var _current: T
+    private var _current: T? = null
     private var _data: Iterable<T>
     private var _enumerator: Iterator<T>
     private lateinit var _sortingFields: Array<String>
-    private val _fields: MutableList <Field> = mutableListOf<Field>()
+    private val _fields: MutableList<Field> = mutableListOf<Field>()
     private var _nextRes: Boolean
     private var _currentIndex: Int = -1
     var properties: MutableMap<String, Field> = mutableMapOf()
@@ -17,14 +17,16 @@ class ObjectDataSource<T> : IDataSource {
         _data = data
         _enumerator = _data.iterator()
         _nextRes = _enumerator.hasNext()
-        _current = _enumerator.next()
+        if (_enumerator.hasNext()) {
+            _current = _enumerator.next()
         _currentIndex++
+        }
         discoverFields()
     }
 
     override fun getValue(fieldName: String, format: String): String {
         val field = _fields.find { it.name == fieldName }
-        val value = field?.getValue(_current, format )
+        val value = field?.getValue(_current, format)
         return value?.toString() ?: ""
     }
 
@@ -36,10 +38,12 @@ class ObjectDataSource<T> : IDataSource {
     }
 
     override fun discoverFields(): Array<Field> {
+        if (_current == null) return emptyArray()
         _fields.clear()
-        _fields.addAll(FieldBuilder.createFields(_current as Any, "",FieldKind.DATA))
-        properties.clear()
-
+        _fields.addAll(FieldBuilder.createFields(_current as Any, "", FieldKind.DATA))
+        _fields.forEach {
+            properties[it.name!!] = it
+        }
         return _fields.toTypedArray()
     }
 
@@ -66,5 +70,5 @@ class ObjectDataSource<T> : IDataSource {
         return _nextRes
     }
 
-
+    val hasNext get() = _nextRes
 }

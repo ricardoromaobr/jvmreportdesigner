@@ -54,20 +54,25 @@ class TextBlockRenderTest {
 
         val surface: Surface = Surface.makeRaster(ImageInfo(500,500,ColorType.RGBA_8888, ColorAlphaType.OPAQUE))
         val canvas: Canvas = surface.canvas
+        val zoom: Float = 100f
+
+        canvas.scale(zoom/100,zoom/100)
         val textBlock = TextBlock()
         textBlock.text = "Ricardo"
-        textBlock.width = 150f
-        textBlock.fontSlant = FontSlant.ITALIC
+        textBlock.width = 50f
+        //textBlock.height = 21f
+        textBlock.fontSlant = FontSlant.NORMAL
         textBlock.fontWeight = FontWeight.BOLD
-        textBlock.fontSize = 20f
+        textBlock.fontSize = 12f
         textBlock.fieldKind = FieldKind.EXPRESSION
         textBlock.horizontalAlignment = myreport.model.HorizontalAligment.CENTER
         textBlock.verticalAlignment = myreport.model.VerticalAlignment.TOP
         textBlock.fontName = "Courier New"
-        textBlock.padding = Thickness(20f)
+        textBlock.padding = Thickness(0f)
         textBlock.fontColor = Color(0f,0f,0f,255f)
         textBlock.backgroundColor = Color(255f,255f,255f,255f)
         textBlock.canGrow = false
+        textBlock.canShrink = false
         textBlock.border = Border(0f).apply {
             color = Color(255f,0f,0f,255f)
         }

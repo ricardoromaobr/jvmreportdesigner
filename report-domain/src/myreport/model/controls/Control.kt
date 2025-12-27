@@ -13,9 +13,9 @@ sealed class Control {
 
     var templateControl: Control? = null
 
-    var backgroundColor = Color(255f, 0f, 0f, 255f)
+    var backgroundColor = Color(255f, 255f, 255f, 255f)
     var location = Point(0f, 0f)
-    var size = Size(0f, 0f)
+    var size = Size(150f, 21f)
 
     open var width: Float
         get() = size.width

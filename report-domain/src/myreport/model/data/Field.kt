@@ -6,7 +6,7 @@ import kotlinx.serialization.Transient
 import kotlin.reflect.KClass
 
 @Serializable
-abstract class Field {
+sealed class Field {
 
     var name: String? = null
 

@@ -13,6 +13,8 @@ import kotlin.test.Test
 
 class ReportTest {
 
+
+
     @Test
     fun createReport() {
 
@@ -39,7 +41,10 @@ class ReportTest {
         }
 
         var s = report.sections.find { s -> s.sectionType == SectionType.DETAILS}
+
         s?.controls?.add(textBlock)
+
+        report.dataSource = listOf<Person>(Person("ricadrdo"))
 
         println(Json.encodeToString(report))
 
@@ -47,3 +52,5 @@ class ReportTest {
 
     }
 }
+
+class Person (var name: String? = null, var age: Int = 0)

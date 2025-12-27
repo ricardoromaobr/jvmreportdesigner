@@ -44,33 +44,53 @@ class ReportEngine {
 
     var parameters: MutableMap<String, Field>? = null
 
+    val startingSection: Section?
+
     constructor(report: Report, reportRenderer: IReportRenderer) {
         this.report = report
         this.reportRenderer = reportRenderer
-        source = report?.DataSource
+        source = report.DataSource
         context = ReportContext()
 
         nextPage()
-        selectCurrentSectionByTemplateSection(report.sections.find { section -> section.sectionType == SectionType.REPORT_HEADER })
+
+        startingSection =
+            report.sections.find { section -> section.sectionType == SectionType.PAGE_FOOTER }
+                ?: report.sections.find { section -> section.sectionType == SectionType.REPORT_HEADER }
+                        ?: report.sections.find { section -> section.sectionType == SectionType.PAGE_HEADER }
+                        ?: report.sections.find { section -> section.sectionType == SectionType.DETAILS }
+                        ?: report.sections.find { section -> section.sectionType == SectionType.REPORT_FOOTER }
+
+        check(startingSection != null) { "Report without a starting section" }
+
+        selectCurrentSectionByTemplateSection(startingSection)
     }
 
+    /**
+     *  Create a new page for report
+     */
     fun nextPage() {
-        val pageFooterSection = report.sections.find { it.sectionType == SectionType.PAGE_HEADER }
-        val pageFooter = pageFooterSection?.height ?: 0f
-        addControlsToCurrentPage(report.height - pageFooter, currentPageFooterSectionControlsBuffer)
+        val pageFooterSection = report.sections.find { it.sectionType == SectionType.PAGE_FOOTER }
+        val pageFooterHeight = pageFooterSection?.height ?: 0f
+
+        addControlsToCurrentPage(report.height - pageFooterHeight, currentPageFooterSectionControlsBuffer)
+
         spanCorrection = 0f
         context?.currentPageIndex++
         currentPage = Page().apply { pageNumber = context?.currentPageIndex ?: 0 }
         context?.heightLeftOnCurrentPage = report.height
         context?.heightUsedOnCurrentPage = 0f
         currentPageFooterSectionControlsBuffer.clear()
-        selectCurrentSectionByTemplateSection(report.sections.find { it.sectionType == SectionType.PAGE_HEADER })
 
+        selectCurrentSectionByTemplateSection(startingSection)
     }
 
     private val controlsFromPreviousSectionPage: MutableMap<String, MutableList<Control>> = mutableMapOf()
 
-    private inline fun <reified T : Section> selectCurrentSectionByTemplateSection(section: T?) {
+    /**
+     *  Select current section by template
+     */
+    private inline fun <reified T : Section> selectCurrentSectionByTemplateSection(section: T?): T {
 
         var newSection: T? = null
 
@@ -86,10 +106,14 @@ class ReportEngine {
             currentSectionOrderedControls.sortBy { ctl -> ctl.top }
         }
 
-        currentSectionOrderedControls.clear()
-        currentSectionOrderedControls.clear()
+        currentSectionSpans?.clear()
+        currentSectionExtendedLines.clear()
         newSection.location = Point(section?.location!!.x, 0f)
         currentSection = newSection
+
+        currentSectionControlsBuffer.clear()
+
+        return newSection
     }
 
 
@@ -114,7 +138,7 @@ class ReportEngine {
 
         for (control in controls) {
             control.top += span
-            currentSectionControlsBuffer.add(control)
+            currentPage?.controls?.add(control)
         }
     }
 
@@ -124,10 +148,29 @@ class ReportEngine {
         while (!processReportPage()) {
             nextPage()
         }
+
+        // set NumberOfPages field wherever it appear
+        for (i in 0..report.pages.indexOf(currentPage)) {
+
+            for (item in report.pages[i].controls) {
+
+                if (item is IDataControl) {
+                    val dc: IDataControl = item as IDataControl
+                    if (dc.fieldName == "#NumberOfPages")
+                        dc.text = report.pages.size.toString()
+                }
+            }
+        }
+
+        //TODO: see if is necessary to reset the data source
+        //if (source != null)
+        //source.reset()
+
+        //onAfterReportProcess()
     }
 
     fun processReportPage(): Boolean {
-        var result = false
+        var result: Boolean
         stop = false
 
         do {
@@ -222,19 +265,19 @@ class ReportEngine {
                 }
             }
 
-            var y = control.top + span
+            val y = control.top + span
             var controlSize = reportRenderer.measureControl(control)
             currentSectionSpans?.forEach { item ->
-                if (y > item.treshold)
-                    tmpSpan = Math.max(tmpSpan, item.treshold)
+                if (y > item.threshold)
+                    tmpSpan = Math.max(tmpSpan, item.span)
             }
 
-            // adjust the space of the control if some control before was resized
+            // adjust the top of the control if some control before grew the height
             span = if (tmpSpan == Float.MIN_VALUE) 0f else tmpSpan
-            control.top += tmpSpan
+            control.top += span
 
             if (control is SubReport) {
-                val sr: SubReport = control as SubReport
+                val sr: SubReport = control
                 var maxSubreportHeight = ((heightThreshold - span) - sr.top)
                 sr.processUpToPage(reportRenderer, maxSubreportHeight)
 
@@ -279,7 +322,7 @@ class ReportEngine {
                 result = false
                 storeSectionForNextPage()
                 if (!currentSection?.keepTogether!!) {
-                    breakControlMax = control.height - (control.top + control.height - heightBeforeGrow)
+                    breakControlMax = control.height - ((control.top + control.height) - heightThreshold)
 
                     if (realBreak == 0f)
                         realBreak = heightThreshold
@@ -317,7 +360,7 @@ class ReportEngine {
 
                     if (!allKeeptogether) {
 
-                        for (w in 1..currentSectionControlsBuffer.size - 1) {
+                        for (w in 1..currentSectionControlsBuffer.size) {
                             currentSectionControlsBuffer[w].height =
                                 currentSectionControlsBuffer[w].templateControl?.height!!
                             currentSectionControlsBuffer[w].width =
@@ -343,7 +386,7 @@ class ReportEngine {
                     maxHeight = Math.max(realBreak, maxHeight)
 
             currentSectionSpans?.add(
-                SpanInfo(treshold = bottomBeforeGrow, span = span + control.bottom - bottomBeforeGrow)
+                SpanInfo(threshold = bottomBeforeGrow, span = span + control.bottom - bottomBeforeGrow)
             )
         }
 
@@ -424,7 +467,7 @@ class ReportEngine {
             SectionType.REPORT_HEADER -> {
                 val reportHeader =
                     report.sections.find { it.sectionType == SectionType.REPORT_HEADER } as? ReportHeaderSection
-                if (reportHeader!!.breakPageAfter) {
+                if (reportHeader?.breakPageAfter!!) {
                     nextPage()
                     stop = true
                 } else {
@@ -483,4 +526,4 @@ class ReportEngine {
     }
 }
 
-internal data class SpanInfo(internal var treshold: Float, internal var span: Float)
+internal data class SpanInfo(internal var threshold: Float, internal var span: Float)
