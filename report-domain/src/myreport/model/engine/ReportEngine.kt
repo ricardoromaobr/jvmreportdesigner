@@ -309,11 +309,14 @@ class ReportEngine {
             control.size = controlSize!!
 
             if (control.bottom <= heightThreshold) {
+
+                // something that happen that need to know if all conrols need
+                // to be together in the current section or not.
                 if (!allKeeptogether)
                     currentSectionControlsBuffer.add(control)
                 else {
                     storeSectionForNextPage()
-                    var controlToStore = control
+                    val controlToStore = control
                     controlToStore.top -= realBreak
                     controlToStore.height = heightBeforeGrow
                     storeControlForNextSection(controlToStore)
@@ -328,7 +331,7 @@ class ReportEngine {
                         realBreak = heightThreshold
 
                     if (control.top > heightThreshold) {
-                        var controlToStore = control
+                        val controlToStore = control
                         controlToStore.top -= realBreak
                         controlToStore.height = heightBeforeGrow
                         storeControlForNextSection(controlToStore)
@@ -337,6 +340,7 @@ class ReportEngine {
 
                     var brokenControl = reportRenderer.breakOffControlAtMostAtHeight(control, breakControlMax)
                     var size = reportRenderer.measureControl(control)
+                    control.size = size!!
                     realBreak = heightThreshold - (breakControlMax - brokenControl[0]?.height!!)
 
                     if (control.bottom > heightThreshold) {
@@ -448,6 +452,7 @@ class ReportEngine {
 
     private fun nextSection() {
         when (currentSection!!.sectionType) {
+
             SectionType.PAGE_HEADER -> {
                 if (context!!.currentPageIndex > 1) {
                     val pageFooter = report.sections.find { it.sectionType == SectionType.PAGE_FOOTER }
@@ -458,7 +463,7 @@ class ReportEngine {
 
             SectionType.PAGE_FOOTER -> {
                 if (!afterReportHeader) {
-                    val reportHeader = report.sections.find { it.sectionType == SectionType.REPORT_FOOTER }
+                    val reportHeader = report.sections.find { it.sectionType == SectionType.REPORT_HEADER }
                     selectCurrentSectionByTemplateSection(reportHeader)
                 } else
                     setDetailsOrGroup()
@@ -482,6 +487,7 @@ class ReportEngine {
             }
 
             SectionType.DETAILS -> setDetailsOrGroup()
+
             SectionType.REPORT_FOOTER -> {
                 val reportFooter = report.sections.find { it.sectionType == SectionType.REPORT_FOOTER }
                 addControlsToCurrentPage(

@@ -41,6 +41,7 @@ class TextBlockRenderTest {
         textBlock.fontName = "Arial"
         textBlock.padding = Thickness(5f)
         textBlock.border = Border(0f)
+        textBlock.fontColor = Color(255f, 255f, 255f, 255f)
 
         val textBlockRenderer = TextBlockRenderer()
 

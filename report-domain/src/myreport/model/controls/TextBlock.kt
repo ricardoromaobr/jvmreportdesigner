@@ -9,6 +9,7 @@ import myreport.model.HorizontalAligment
 import myreport.model.Thickness
 import myreport.model.VerticalAlignment
 import myreport.model.data.FieldKind
+import org.intellij.lang.annotations.JdkConstants
 
 @Serializable
 class TextBlock : Control(), IResizable, IDataControl {
@@ -25,25 +26,24 @@ class TextBlock : Control(), IResizable, IDataControl {
 
     override var text: String = ""
 
-    lateinit var border: Border
+    var border: Border
 
     lateinit var fontName: String
 
-    lateinit var padding: Thickness
+    var padding: Thickness
 
     var lineSpan : Float = 0f
 
-    var fontSize : Float = 0f
+    var fontSize : Float = 10f
 
-    lateinit var fontSlant: FontSlant
+    var fontSlant: FontSlant
 
-    lateinit var fontWeight: FontWeight
+    var fontWeight: FontWeight
 
-    lateinit var fontColor: Color
+    var fontColor: Color
 
-    lateinit var horizontalAlignment: HorizontalAligment
-    lateinit var verticalAlignment: VerticalAlignment
-
+    var horizontalAlignment: HorizontalAligment
+    var verticalAlignment: VerticalAlignment
 
     override fun createControl(): Control {
         val textBlock = TextBlock()
@@ -65,5 +65,17 @@ class TextBlock : Control(), IResizable, IDataControl {
         textBlock.verticalAlignment = verticalAlignment
         textBlock.text = text
         return textBlock
+    }
+
+    init {
+        fontColor = Color(255f, 255f, 255f, 255f)
+        fontSlant = FontSlant.NORMAL
+        fontWeight = FontWeight.NORMAL
+        horizontalAlignment = HorizontalAligment.LEFT
+        verticalAlignment = VerticalAlignment.TOP
+        padding = Thickness(5f)
+        border  = Border(0f).apply {
+            color = Color(0f, 0f, 0f, 255f)
+        }
     }
 }

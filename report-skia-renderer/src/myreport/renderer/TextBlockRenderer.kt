@@ -305,7 +305,7 @@ class TextBlockRenderer : IControlRenderer {
         val paragraph = settingParagraph(textBlock)
         paragraph.layout(textBlock.width)
 
-        var controls: Array<Control?> = arrayOfNulls(0)
+        var controls: Array<Control?>
 
         if (paragraph.height > height) {
             var positionOnTheText = paragraph.getGlyphPositionAtCoordinate(textBlock.width,height)

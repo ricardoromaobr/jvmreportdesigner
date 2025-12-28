@@ -47,9 +47,6 @@ class ReportTest {
         report.dataSource = listOf<Person>(Person("ricadrdo"))
 
         println(Json.encodeToString(report))
-
-
-
     }
 }
 
