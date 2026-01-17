@@ -5,6 +5,7 @@ import kotlinx.serialization.Transient
 
 import myreport.model.PaperSizes.Companion.paperSizes
 import myreport.model.controls.DetailSection
+import myreport.model.controls.PageFooterSection
 import myreport.model.controls.PageHeaderSection
 import myreport.model.controls.ReportHeaderSection
 import myreport.model.controls.Section
@@ -34,7 +35,7 @@ class Report {
             field = value
 
             if (value != PaperSizeType.CUSTOM_SIZE)
-                paperSize = paperSizes.first { paperSize -> paperSize.paperSizeType == paperSizeType }
+                paperSize = PaperSizes.paperSizes.find { paperSize -> paperSize.paperSizeType == paperSizeType }
         }
 
     private var paperSize: PaperSize? = null
@@ -102,6 +103,7 @@ class Report {
         dataFields.clear()
         check(DataSource != null) { "DataSouce can't be null while discovering data fields." }
         dataFields.addAll(DataSource!!.discoverFields())
+        DataSource?.reset()
     }
 
     fun copyToReport(r: Report) {
@@ -116,14 +118,7 @@ class Report {
         r.parameters.addAll(parameters)
     }
 
-    init {
-        var section: Section = ReportHeaderSection()
-        sections.add(section)
-        section = PageHeaderSection()
-        sections.add(section)
-        section = DetailSection()
-        sections.add(section)
-    }
+
 }
 
 

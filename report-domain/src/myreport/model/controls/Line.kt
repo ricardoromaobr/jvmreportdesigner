@@ -71,7 +71,7 @@ class Line : Control() {
         line.end = Point(end.x, end.y)
         line.lineWidth = lineWidth
         line.lineType = lineType
-        line.lineMode = line.lineMode
+        line.lineMode = lineMode
         line.extendToBottom = extendToBottom
         return line
     }

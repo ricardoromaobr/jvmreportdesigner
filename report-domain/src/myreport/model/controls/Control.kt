@@ -13,7 +13,7 @@ sealed class Control {
 
     var templateControl: Control? = null
 
-    var backgroundColor = Color(255f, 255f, 255f, 255f)
+    var backgroundColor = Color(0f, 0f, 0f, 255f)
     var location = Point(0f, 0f)
     var size = Size(150f, 21f)
 
@@ -32,7 +32,7 @@ sealed class Control {
     open var top: Float
         get() = location.y
         set(value) {
-            location = Point(location.y, value)
+            location = Point(location.x, value)
         }
 
     open var left: Float
@@ -44,7 +44,7 @@ sealed class Control {
     open val bottom: Float
         get() = location.y + size.height
 
-    var isVisible = false
+    var isVisible = true
 
     fun measureBottomMarginFromSection(s: Section) {
     }

@@ -10,6 +10,8 @@ class PageFooterSection: Section() {
         sectionType = SectionType.PAGE_FOOTER
     }
     override fun createControl(): Control {
-        TODO("Not yet implemented")
+        val pfs = PageFooterSection()
+        copyTo(pfs)
+        return pfs
     }
 }

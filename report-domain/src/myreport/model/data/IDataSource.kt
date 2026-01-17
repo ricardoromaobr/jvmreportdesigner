@@ -8,4 +8,5 @@ interface IDataSource  {
     fun discoverFields() : Array<Field>
     fun containsField(fieldName: String): Boolean
     fun moveNext(): Boolean
+    fun reset()
 }

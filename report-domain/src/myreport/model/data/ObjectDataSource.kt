@@ -19,7 +19,8 @@ class ObjectDataSource<T> : IDataSource {
         _nextRes = _enumerator.hasNext()
         if (_enumerator.hasNext()) {
             _current = _enumerator.next()
-        _currentIndex++
+            _currentIndex++
+            _nextRes = _enumerator.hasNext()
         }
         discoverFields()
     }
@@ -54,17 +55,17 @@ class ObjectDataSource<T> : IDataSource {
     val current: Any?
         get() = _current
 
-    fun reset() {
+    override fun reset() {
         _enumerator = _data.iterator()
         _nextRes = _enumerator.hasNext()
-        _current = _enumerator.next()
+        _current = null
         _currentIndex = 0
     }
 
     override fun moveNext(): Boolean {
 
+        _nextRes = _enumerator.hasNext()
         if (_nextRes) {
-            _nextRes = _enumerator.hasNext()
             _current = _enumerator.next()
         }
         return _nextRes

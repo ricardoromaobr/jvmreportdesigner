@@ -26,7 +26,7 @@ class ReportEngine {
     internal var currentPage: Page? = null
     private var beforeFistDetailSection = true
     private var currentSection: Section? = null
-    private var currentSectionSpans: MutableList<SpanInfo>? = null
+    private var currentSectionSpans: MutableList<SpanInfo> = mutableListOf()
 
     private var currentSectionOrderedControls = mutableListOf<Control>()
     private var currentSectionControlsBuffer = mutableListOf<Control>()
@@ -39,7 +39,7 @@ class ReportEngine {
 
     var isSubreport: Boolean = false
 
-    private var dataSourceHasNextRow = true
+    private var dataSourceHasNextRow = false
     private var stop = false
 
     var parameters: MutableMap<String, Field>? = null
@@ -52,8 +52,6 @@ class ReportEngine {
         source = report.DataSource
         context = ReportContext()
 
-        nextPage()
-
         startingSection =
             report.sections.find { section -> section.sectionType == SectionType.PAGE_FOOTER }
                 ?: report.sections.find { section -> section.sectionType == SectionType.REPORT_HEADER }
@@ -62,6 +60,10 @@ class ReportEngine {
                         ?: report.sections.find { section -> section.sectionType == SectionType.REPORT_FOOTER }
 
         check(startingSection != null) { "Report without a starting section" }
+
+        if (startingSection.sectionType == SectionType.DETAILS) beforeFistDetailSection = false
+
+        nextPage()
 
         selectCurrentSectionByTemplateSection(startingSection)
     }
@@ -81,7 +83,7 @@ class ReportEngine {
         context?.heightLeftOnCurrentPage = report.height
         context?.heightUsedOnCurrentPage = 0f
         currentPageFooterSectionControlsBuffer.clear()
-
+        report.pages.add(currentPage!!)
         selectCurrentSectionByTemplateSection(startingSection)
     }
 
@@ -102,11 +104,11 @@ class ReportEngine {
         } else {
             newSection = section?.createControl() as T
             newSection.format()
-            currentSectionOrderedControls = newSection.controls
+            currentSectionOrderedControls = newSection.controls.toMutableList()
             currentSectionOrderedControls.sortBy { ctl -> ctl.top }
         }
 
-        currentSectionSpans?.clear()
+        currentSectionSpans.clear()
         currentSectionExtendedLines.clear()
         newSection.location = Point(section?.location!!.x, 0f)
         currentSection = newSection
@@ -143,6 +145,7 @@ class ReportEngine {
     }
 
     fun process() {
+
         nextRecord()
 
         while (!processReportPage()) {
@@ -184,9 +187,10 @@ class ReportEngine {
             if (!result && currentSection!!.keepTogether)
                 currentSectionControlsBuffer.clear()
 
-            addControlsToCurrentPage(context!!.heightUsedOnCurrentPage)
+            if (result)
+                addControlsToCurrentPage(context!!.heightUsedOnCurrentPage)
 
-            context?.heightUsedOnCurrentPage -= currentSection!!.height
+            context?.heightLeftOnCurrentPage -= currentSection!!.height
             context?.heightUsedOnCurrentPage += currentSection!!.height
 
             if (result)
@@ -389,7 +393,7 @@ class ReportEngine {
                 if (realBreak > 0)
                     maxHeight = Math.max(realBreak, maxHeight)
 
-            currentSectionSpans?.add(
+            currentSectionSpans.add(
                 SpanInfo(threshold = bottomBeforeGrow, span = span + control.bottom - bottomBeforeGrow)
             )
         }
@@ -401,8 +405,16 @@ class ReportEngine {
             (currentSection?.canShrink!! && currentSection?.height!! > sectionHeightWithMargin)
         )
             currentSection?.height = sectionHeightWithMargin
-        else
-            currentSection?.height = Math.max(currentSection?.height!!, heightThreshold)
+        else {
+            if (currentSection?.height!! > heightThreshold) {
+                storeSectionForNextPage()
+                for (control in currentSectionOrderedControls)
+                    storeControlForNextSection(control)
+                result = false
+            }
+
+            //currentSection?.height = Math.min(currentSection?.height!!, heightThreshold)
+        }
 
         for (lineItem in currentSectionExtendedLines) {
 
@@ -425,10 +437,13 @@ class ReportEngine {
 
         sectionToStore = null
 
+        /*
         if (!currentSection?.canGrow!!) {
             controlsFromPreviousSectionPage.remove(currentSection?.name)
             result = true
         }
+
+         */
 
         return result
     }
@@ -454,19 +469,36 @@ class ReportEngine {
         when (currentSection!!.sectionType) {
 
             SectionType.PAGE_HEADER -> {
-                if (context!!.currentPageIndex > 1) {
-                    val pageFooter = report.sections.find { it.sectionType == SectionType.PAGE_FOOTER }
-                    selectCurrentSectionByTemplateSection(pageFooter)
-                } else
-                    setDetailsOrGroup()
+//                if (context!!.currentPageIndex > 1) {
+//                    val pageFooter = report.sections.find { it.sectionType == SectionType.PAGE_FOOTER }
+//                    if (pageFooter != null)
+//                        selectCurrentSectionByTemplateSection(pageFooter)
+//                    else
+//                        setDetailsOrGroup()
+//                } else
+                setDetailsOrGroup()
             }
 
             SectionType.PAGE_FOOTER -> {
                 if (!afterReportHeader) {
                     val reportHeader = report.sections.find { it.sectionType == SectionType.REPORT_HEADER }
-                    selectCurrentSectionByTemplateSection(reportHeader)
-                } else
-                    setDetailsOrGroup()
+                    if (reportHeader != null)
+                        selectCurrentSectionByTemplateSection(reportHeader)
+                    else {
+                        val pageHeader = report.sections.find { it.sectionType == SectionType.PAGE_HEADER }
+                        if (pageHeader != null)
+                            selectCurrentSectionByTemplateSection(pageHeader)
+                        else
+                            setDetailsOrGroup()
+                        afterReportHeader = true
+                    }
+                } else {
+                    val pageHeader = report.sections.find { it.sectionType == SectionType.PAGE_HEADER }
+                    if (pageHeader != null)
+                        selectCurrentSectionByTemplateSection(pageHeader)
+                    else
+                        setDetailsOrGroup()
+                }
             }
 
             SectionType.REPORT_HEADER -> {
@@ -476,9 +508,11 @@ class ReportEngine {
                     nextPage()
                     stop = true
                 } else {
-                    if (context?.currentPageIndex == 1)
-                        selectCurrentSectionByTemplateSection(reportHeader)
-                    else
+                    if (context?.currentPageIndex == 1) {
+                        val pageHeader =
+                            report.sections.find { it.sectionType == SectionType.PAGE_HEADER }
+                        selectCurrentSectionByTemplateSection(pageHeader)
+                    } else
                         setDetailsOrGroup()
                 }
 
@@ -517,9 +551,19 @@ class ReportEngine {
         if (dataSourceHasNextRow || beforeFistDetailSection)
             selectCurrentSectionByTemplateSection(detailSection)
         else {
-            val reportHeader = report.sections.find { it.sectionType == SectionType.REPORT_HEADER }
+            val reportFooter = report.sections.find { it.sectionType == SectionType.REPORT_FOOTER }
+            if (reportFooter != null)
+                selectCurrentSectionByTemplateSection(reportFooter)
+            else {
+                val pageFooter = report.sections.find { it.sectionType == SectionType.PAGE_FOOTER }
+                if (pageFooter != null)
+                    addControlsToCurrentPage(
+                        report.height - pageFooter.height,
+                        currentPageFooterSectionControlsBuffer
+                    )
 
-            selectCurrentSectionByTemplateSection(reportHeader)
+                stop = true
+            }
         }
 
         beforeFistDetailSection = false
@@ -527,9 +571,10 @@ class ReportEngine {
 
     private fun nextRecord() {
         dataSourceHasNextRow = source!!.moveNext()
-        context?.rowIndex++
+        if (dataSourceHasNextRow)
+            context?.rowIndex++
 
     }
 }
 
-internal data class SpanInfo(internal var threshold: Float, internal var span: Float)
+data class SpanInfo(var threshold: Float, var span: Float)

@@ -9,7 +9,6 @@ import myreport.model.HorizontalAligment
 import myreport.model.Thickness
 import myreport.model.VerticalAlignment
 import myreport.model.data.FieldKind
-import org.intellij.lang.annotations.JdkConstants
 
 @Serializable
 class TextBlock : Control(), IResizable, IDataControl {
@@ -68,7 +67,7 @@ class TextBlock : Control(), IResizable, IDataControl {
     }
 
     init {
-        fontColor = Color(255f, 255f, 255f, 255f)
+        fontColor = Color(0f, 0f, 0f, 255f)
         fontSlant = FontSlant.NORMAL
         fontWeight = FontWeight.NORMAL
         horizontalAlignment = HorizontalAligment.LEFT
@@ -77,5 +76,7 @@ class TextBlock : Control(), IResizable, IDataControl {
         border  = Border(0f).apply {
             color = Color(0f, 0f, 0f, 255f)
         }
+        fontName = "Courier New"
+        backgroundColor = Color(255f, 255f, 255f, 255f)
     }
 }

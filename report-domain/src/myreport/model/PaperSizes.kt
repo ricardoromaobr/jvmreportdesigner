@@ -23,7 +23,7 @@ internal class PaperSizes  {
          * @param height The page height in inches
          */
         fun createACustomSize(width: Float, height: Float): PaperSize {
-            return PaperSize(PaperSizeType.A4, width, height)
+            return PaperSize(PaperSizeType.CUSTOM_SIZE, width, height)
         }
 
 

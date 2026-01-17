@@ -18,8 +18,12 @@ class SectionRenderer : IControlRenderer {
         canvas.save()
 
         // define the section border
-        val borderRect = Rect(section.location.x,
-            section.location.y, section.width, section.height )
+        val borderRect = Rect.makeLTRB(
+            section.location.x,
+            section.location.y,
+            section.location.x + section.width,
+            section.location.y + section.height)
+
         canvas.clipRect(borderRect)
 
         // create a paint

@@ -130,7 +130,14 @@ class TextBlockRenderer : IControlRenderer {
             fontSize = textBlock.fontSize
             fontFamilies = arrayOf( textBlock.fontName)
         })
-        paragraphBuilder.addText(textBlock.text)
+
+        var text: String
+        if (!textBlock.fieldTextFormat.isNullOrEmpty())
+            text = textBlock.fieldTextFormat.format(textBlock.text)
+        else
+            text = textBlock.text
+
+        paragraphBuilder.addText(text)
 
         val paragraph = paragraphBuilder.build()
         return paragraph
