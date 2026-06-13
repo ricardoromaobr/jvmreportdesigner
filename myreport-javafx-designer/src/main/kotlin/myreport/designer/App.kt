@@ -73,15 +73,6 @@ class App : Application() {
         stage.show()
     }
 
-
-
-
-
-
-
-
-
-
 }
 
 fun main(args: Array<String>): Unit {
