@@ -37,6 +37,7 @@ class FieldBuilder {
                 fields.add(
                     PropertyDataField(null) { value -> value }.apply {
                         this.name = name
+                        this.fieldKind = fieldKind
                     }
                 )
             } else {

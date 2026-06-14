@@ -32,7 +32,6 @@ class DesignService {
         }
 
     var startPressPoint: java.awt.Point? = null
-        private set
 
     var endPressPoint: java.awt.Point? = null
         private set

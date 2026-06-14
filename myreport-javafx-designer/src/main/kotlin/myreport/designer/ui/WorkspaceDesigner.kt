@@ -6,11 +6,16 @@ import javafx.scene.control.ToolBar
 import javafx.scene.control.TreeCell
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
+import javafx.scene.input.ClipboardContent
+import javafx.scene.input.DataFormat
+import javafx.scene.input.Dragboard
+import javafx.scene.input.TransferMode
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
 import javafx.util.Callback
+import kotlinx.serialization.Serializable
 import myreport.designer.myreport.designer.ui.ReportDesigner
 import myreport.designer.services.CompilerService
 import myreport.designer.services.DesignService
@@ -20,6 +25,9 @@ import myreport.model.Report
 import myreport.model.data.Field
 import myreport.model.data.FieldBuilder
 import myreport.model.data.FieldKind
+import java.awt.Point
+
+val DRAG_REPORT_DATA_FORMAT = DataFormat("Application/x-report-data")
 
 class WorkspaceDesigner : Region {
     private val _reportDesigner: ReportDesigner
@@ -61,6 +69,56 @@ class WorkspaceDesigner : Region {
             _workspaceArea.prefWidth = newValue.toDouble()
         }
 
+        _reportDesigner.onDragOver = {
+            if (it.dragboard.hasString())
+                it.acceptTransferModes(TransferMode.COPY)
+            it.consume()
+        }
+
+        //
+        _reportDesigner.onDragDropped = {
+            val dropedSection = _designerService.getSectionViewByXY(it.x.toFloat(), it.y.toFloat())
+            if (dropedSection == null) {
+                it.isDropCompleted = false
+            } else {
+                val fieldName = it.dragboard.string
+                val draggedField = field(fieldName)
+                if (draggedField != null) {
+                    if (draggedField is Field) {
+                        _designerService.startPressPoint = Point(it.x.toInt(), it.y.toInt())
+                        _designerService.createTextBlockAtXY(draggedField.name!!,
+                            draggedField.name!!, draggedField.fieldKind,
+                            it.x.toFloat(), it.y.toFloat())
+                    }
+                    it.isDropCompleted = true
+                    it.consume()
+                    invalidate()
+                }
+
+            }
+        }
+
+    }
+
+    private fun field(fieldName: String?): Field? {
+        var treeItem = _treeView?.root?.children?.filter {
+            it.value.description == "Data" }?.first()
+
+        treeItem = treeItem?.children?.filter { it.value.field?.name == fieldName }?.firstOrNull()
+
+        if (treeItem == null) {
+            treeItem = _treeView?.root?.children?.filter {
+                it.value.description == "Parameters" }?.first()
+            treeItem = treeItem?.children?.filter { it.value.field?.name == fieldName }?.firstOrNull()
+
+            if (treeItem == null) {
+                treeItem = _treeView?.root?.children?.filter {
+                    it.value.description == "Expressions" }?.first()
+                treeItem = treeItem?.children?.filter { it.value.field?.name == fieldName }?.firstOrNull()
+            }
+        }
+        val draggedField = treeItem?.value?.field
+        return draggedField
     }
 
     private fun createControls(): VBox {
@@ -103,10 +161,19 @@ class WorkspaceDesigner : Region {
             object : TreeCell<ReportItem>() {
                 override fun updateItem(item: ReportItem?, empty: Boolean) {
                     super.updateItem(item, empty)
-                    if (item?.field == null)
+                    if (item?.field == null) {
                         text = item?.description
-                    else
-                        text = item?.field?.name
+                        onDragDetected = null
+                    } else {
+                        text = item.field?.name
+                        onDragDetected = {
+                            val db: Dragboard = startDragAndDrop(TransferMode.COPY)
+                            val content = ClipboardContent()
+                            content.putString(item.field?.name)
+                            db.setContent(content)
+                            it.consume()
+                        }
+                    }
                 }
 
             }
@@ -125,6 +192,7 @@ class WorkspaceDesigner : Region {
         _propertyGrid.setObject(control)
     }
 
+    @Serializable
     class ReportItem(val description: String) {
 
         var field: Field? = null
@@ -147,7 +215,7 @@ class WorkspaceDesigner : Region {
         treeItem?.children!!.clear()
 
         _report.dataFields.forEach {
-            treeItem.children.add(TreeItem(ReportItem(it.name!!).apply{ field = it}))
+            treeItem.children.add(TreeItem(ReportItem(it.name!!).apply { field = it }))
         }
 
 
@@ -156,8 +224,8 @@ class WorkspaceDesigner : Region {
         val parameters = data[1] as Map<*, *>
 
         parameters.forEach {
-            val newField = FieldBuilder.createFields(it.value!!, it.key.toString(), FieldKind.PARAMETER ).single()
-            treeItem.children.add(TreeItem( ReportItem(newField.name!!).apply{ field = newField}))
+            val newField = FieldBuilder.createFields(it.value!!, it.key.toString(), FieldKind.PARAMETER).single()
+            treeItem.children.add(TreeItem(ReportItem(newField.name!!).apply { field = newField }))
         }
 
 
@@ -165,17 +233,17 @@ class WorkspaceDesigner : Region {
     }
 
     fun createExpressionsFields(treeItem: TreeItem<ReportItem>) {
-        var pageNumberField = FieldBuilder.createFields(0,"#PageNumber", FieldKind.EXPRESSION).single();
+        var pageNumberField = FieldBuilder.createFields(0, "#PageNumber", FieldKind.EXPRESSION).single();
         pageNumberField.name = "#PageNumber";
-        var numberOfPagesField = FieldBuilder.createFields(0,"#NumberOfPages",FieldKind.EXPRESSION).single();
+        var numberOfPagesField = FieldBuilder.createFields(0, "#NumberOfPages", FieldKind.EXPRESSION).single();
         numberOfPagesField.name = "#NumberOfPages";
-        var rowNumberField = FieldBuilder.createFields(0,"#RowNumber",FieldKind.EXPRESSION).single();
+        var rowNumberField = FieldBuilder.createFields(0, "#RowNumber", FieldKind.EXPRESSION).single();
         rowNumberField.name = "#RowNumber";
 
         treeItem.children.addAll(
-            TreeItem(ReportItem(pageNumberField.name!!).apply{ field = pageNumberField}),
-            TreeItem(ReportItem(numberOfPagesField.name!!).apply{ field = numberOfPagesField}),
-            TreeItem(ReportItem(rowNumberField.name!!).apply{ field = rowNumberField})
+            TreeItem(ReportItem(pageNumberField.name!!).apply { field = pageNumberField }),
+            TreeItem(ReportItem(numberOfPagesField.name!!).apply { field = numberOfPagesField }),
+            TreeItem(ReportItem(rowNumberField.name!!).apply { field = rowNumberField })
         )
     }
 
